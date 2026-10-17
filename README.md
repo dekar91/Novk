@@ -4,7 +4,7 @@ Exports the authenticated user's accessible personal wall, including other peopl
 
 ## Build and authorize
 
-The existing project uses JDK 26 and the Gradle wrapper. Start with [docs/AUTH.md](docs/AUTH.md): it explains the correct user token and includes a Mini App authorization helper.
+The existing project uses JDK 26 and the Gradle wrapper. Start with [docs/AUTH.md](docs-details/AUTH.md): it explains the correct user token and includes a Mini App authorization helper.
 
 ```powershell
 .\gradlew.bat check :app:installDist

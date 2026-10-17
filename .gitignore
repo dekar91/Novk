@@ -44,7 +44,7 @@ bin/
 ### Mac OS ###
 .DS_Store
 archive/
-auth-helper/node_modules/
-auth-helper/vk-bridge.min.js
+docs/node_modules/
+docs/vk-bridge.min.js
 .env
 .env.*
