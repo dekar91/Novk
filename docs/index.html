@@ -4,25 +4,50 @@
 </head><body><h1>Novk authorization</h1>
 <p>Open this page inside your own VK Mini App. Your hosting domain alone is not a VK application.</p>
 <label>Your numeric VK Mini App ID <input id="app" inputmode="numeric"></label><br>
-<button id="authorize">Request user API token</button>
-<p id="status">Token stays in this page's memory. No analytics or backend submission.</p>
+<button id="authorize" disabled>Request user API token</button>
+<p id="status">Connecting to VK…</p>
 <textarea id="token" readonly aria-label="Access token" placeholder="Token appears here after approval"></textarea>
 <button id="clear">Clear token</button>
-<p>Copy only the token value into the local PowerShell prompt described in docs/AUTH.md. Never share it or put it in source control.</p>
+<p>Copy only the token value into the local PowerShell prompt described in the authorization guide. Never share it or put it in source control.</p>
 <script src="./vk-bridge.min.js"></script>
 <script>
 const app = document.getElementById('app'), token = document.getElementById('token'), status = document.getElementById('status');
 const launchId = new URLSearchParams(location.search).get('vk_app_id');
 if (launchId) app.value = launchId;
+const authorize = document.getElementById('authorize');
+// VK must receive its startup handshake before the user can interact with the app.
+async function initialize() {
+  if (!window.vkBridge) {
+    status.textContent = 'Bridge failed to load. Check that vk-bridge.min.js is beside index.html and reload.';
+    return;
+  }
+  if (!vkBridge.isEmbedded()) {
+    status.textContent = 'Page loaded successfully. Open your Mini App through VK to authorize; this standalone page cannot request a token.';
+    return;
+  }
+  const timer = setTimeout(() => {
+    status.textContent = 'VK has not acknowledged startup. Check the app frontend URL and reload the Mini App.';
+  }, 10000);
+  try {
+    await vkBridge.send('VKWebAppInit');
+    authorize.disabled = false;
+    status.textContent = 'Connected to VK. You can now request a user API token.';
+  } catch (_) {
+    status.textContent = 'VK startup failed. Check the app frontend URL and reload the Mini App.';
+  } finally {
+    clearTimeout(timer);
+  }
+}
+initialize();
 document.getElementById('clear').onclick = () => { token.value = ''; status.textContent = 'Token cleared locally. This does not revoke it in VK.'; };
 document.getElementById('authorize').onclick = async () => {
+  if (authorize.disabled) return;
   token.value = '';
   const id = Number(app.value);
   if (!Number.isSafeInteger(id) || id <= 0) { status.textContent = 'Enter your numeric VK application ID.'; return; }
   if (launchId && id !== Number(launchId)) { status.textContent = 'App ID does not match the VK launch parameters.'; return; }
   try {
     if (!window.vkBridge) throw new Error('Bridge missing');
-    await vkBridge.send('VKWebAppInit');
     const response = await vkBridge.send('VKWebAppGetAuthToken', {app_id:id, scope:'wall,photos,video,docs'});
     if (!response.access_token) throw new Error('No token');
     token.value = response.access_token;

@@ -19,7 +19,7 @@ The Mini App documentation you linked concerns a VK application registered in VK
 
    This pins the official `@vkontakte/vk-bridge` package to 3.0.2 and copies its browser bundle locally. Upload **index.html and vk-bridge.min.js** together to your HTTPS frontend. Keep the page free of analytics and unrelated scripts: any script running there could read the token. Don't upload node_modules.
 3. Open your Mini App **inside VK** through its registered launch link, signed in as the owner of the wall. Opening the HTTPS page directly does not provide the VK Bridge host context. Ensure your account can launch the app in its current development/publication state.
-4. Click “Request user API token.” The helper calls `VKWebAppInit`, then `VKWebAppGetAuthToken` with your app ID and `wall,photos,video,docs`. Review VK's consent screen. Application policy/platform restrictions can still prevent scopes or methods; do not assume approval is guaranteed.
+4. The helper sends `VKWebAppInit` immediately when loaded inside VK. Wait for “Connected to VK,” then click “Request user API token.” The button calls `VKWebAppGetAuthToken` with your app ID and `wall,photos,video,docs`. Review VK's consent screen. Application policy/platform restrictions can still prevent scopes or methods; do not assume approval is guaranteed.
 5. Copy only the returned token into the local PowerShell `Read-Host -MaskInput` prompt in README.md. Clear the helper field afterwards. The helper neither stores the token nor sends it to a custom backend.
 6. Run `doctor`. Check that its printed user ID is yours and that `wall.get` succeeds. Inspect failures individually. Test `archive` without deletion and inspect the files before enabling destructive mode.
 
