@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>Novk authorization</title>
+<style>body{font:18px system-ui;max-width:760px;margin:3em auto;padding:1em}input,button,textarea{font:inherit;margin:.5em 0;padding:.5em}textarea{width:95%;height:8em}pre{white-space:pre-wrap}</style>
+</head><body><h1>Novk authorization</h1>
+<p>Open this page inside your own VK Mini App. Your hosting domain alone is not a VK application.</p>
+<label>Your numeric VK Mini App ID <input id="app" inputmode="numeric"></label><br>
+<button id="authorize">Request user API token</button>
+<p id="status">Token stays in this page's memory. No analytics or backend submission.</p>
+<textarea id="token" readonly aria-label="Access token" placeholder="Token appears here after approval"></textarea>
+<button id="clear">Clear token</button>
+<p>Copy only the token value into the local PowerShell prompt described in docs/AUTH.md. Never share it or put it in source control.</p>
+<script src="./vk-bridge.min.js"></script>
+<script>
+const app = document.getElementById('app'), token = document.getElementById('token'), status = document.getElementById('status');
+const launchId = new URLSearchParams(location.search).get('vk_app_id');
+if (launchId) app.value = launchId;
+document.getElementById('clear').onclick = () => { token.value = ''; status.textContent = 'Token cleared locally. This does not revoke it in VK.'; };
+document.getElementById('authorize').onclick = async () => {
+  token.value = '';
+  const id = Number(app.value);
+  if (!Number.isSafeInteger(id) || id <= 0) { status.textContent = 'Enter your numeric VK application ID.'; return; }
+  if (launchId && id !== Number(launchId)) { status.textContent = 'App ID does not match the VK launch parameters.'; return; }
+  try {
+    if (!window.vkBridge) throw new Error('Bridge missing');
+    await vkBridge.send('VKWebAppInit');
+    const response = await vkBridge.send('VKWebAppGetAuthToken', {app_id:id, scope:'wall,photos,video,docs'});
+    if (!response.access_token) throw new Error('No token');
+    token.value = response.access_token;
+    status.textContent = 'Token received. Granted scope: ' + (response.scope || '(not reported)') + '. Run doctor locally; receipt does not prove API access.';
+  } catch (error) {
+    status.textContent = 'Authorization failed. Open through VK, check your app ID and permitted scopes. VK code: ' + (error?.error_data?.error_code ?? error?.error_type ?? 'unavailable');
+  }
+};
+</script></body></html>
